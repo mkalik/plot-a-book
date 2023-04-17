@@ -21,6 +21,7 @@
 
 # <a name='desc'></a>
 ## 0.Description:
+![home](./images/home-ss.png)
 an online application that allows one to search for books, then store them in an account they create! This application also allows for the removal of saved books!
 [check it out!](https://plot-a-book.herokuapp.com/)
 # <a name='1'></a>
