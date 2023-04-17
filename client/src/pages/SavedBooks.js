@@ -8,40 +8,39 @@ import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
 
 const SavedBooks = () => {
-    const [userData, setUserData] = useState({});
+    const [userData, setUserData] = useState({ savedBooks: [] });
 
     // use this to determine if `useEffect()` hook needs to run again
     const userDataLength = Object.keys(userData).length;
     const { data, loading, error, refetch } = useQuery(GET_ME);
     const [deleteBook] = useMutation(DEL_BOOK);
 
-    useEffect(() => {
-        const getUserData = async () => {
-            try {
-                const token = Auth.loggedIn() ? Auth.getToken() : null;
+    console.log('userdata', userData);
+    // useEffect(() => {
+    const getUserData = async () => {
+        try {
+            const token = Auth.loggedIn() ? Auth.getToken() : null;
 
-                if (!token) {
-                    return false;
-                }
+            if (!token) {
+                return false;
+            }
 
-                if (error) {
-                    throw new Error('something went wrong!');
-                }
-                if (loading) {
-                    return '...loading';
-                }
-
+            if (error) {
+                throw new Error('something went wrong!');
+            }
+            if (!loading) {
                 const { getUser: user } = await data;
                 console.log(user);
 
                 setUserData(user);
-            } catch (err) {
-                console.error(err);
             }
-        };
+        } catch (err) {
+            console.error(err);
+        }
+        refetch();
+    };
 
-        getUserData();
-    }, [userDataLength, loading]);
+    // }, [userDataLength, loading]);
     console.log(userDataLength);
 
     // create function that accepts the book's mongo_id value as param and deletes the book from the database
@@ -54,12 +53,11 @@ const SavedBooks = () => {
 
         try {
             const {
-                data: {
-                    deleteBook: { savedBooks: response },
-                },
+                data: { deleteBook: response },
                 loading: wait,
                 error: err,
             } = await deleteBook({ variables: { bookId } });
+            console.log('res', response);
 
             if (!response) {
                 throw new Error('something went wrong!');
@@ -72,14 +70,14 @@ const SavedBooks = () => {
         } catch (err) {
             console.error(err);
         }
+        refetch();
     };
 
     // if data isn't here yet, say so
-    if (!userDataLength) {
-        // refetch();
+    if (loading) {
         return <h2>LOADING...</h2>;
     }
-
+    getUserData();
     return (
         <>
             <div fluid className="text-light bg-dark p-5">
