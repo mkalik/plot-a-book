@@ -15,7 +15,7 @@ module.exports = {
         if (req.headers.authorization) {
             token = token.split(' ').pop().trim();
         }
-        console.log(token);
+        // console.log(token);
 
         // if (!token) {
         //     return res.status(400).json({ message: 'You have no token!' });
@@ -25,6 +25,7 @@ module.exports = {
         try {
             const { data } = jwt.verify(token, secret, { maxAge: expiration });
             req.user = data;
+            // console.log(req.user);
         } catch {
             console.log('Invalid token');
             // return res.status(400).json({ message: 'invalid token!' });
@@ -32,6 +33,7 @@ module.exports = {
 
         // send to next endpoint
         // next();
+        return req.user;
     },
     signToken: function ({ username, email, _id }) {
         const payload = { username, email, _id };

@@ -10,16 +10,17 @@ const resolvers = {
             });
             return user;
         },
-        getUsers: async (parent, args, context) => {
-            console.log(context.user);
-            return User.find();
+        getUser: async (parent, args, context) => {
+            console.log(context);
+            return User.findOne({ _id: context._id }).populate('savedBooks');
         },
     },
     Mutation: {
-        loginUser: async (parent, { username, email, password }) => {
+        loginUser: async (parent, { username, password }) => {
             const user = await User.findOne({
-                $or: [{ email: email }, { username: username }],
+                $or: [{ email: username }, { username: username }],
             });
+            console.log(user);
             if (!user) {
                 throw new AuthenticationError('user not found');
             }
@@ -42,28 +43,35 @@ const resolvers = {
             { authors, description, bookId, image, link, title },
             context
         ) => {
-            const book = await Book.create({
+            console.log('this is context:', context);
+            const book = {
                 authors,
                 description,
                 bookId,
                 image,
                 link,
                 title,
-            });
-            const user = User.findOneAndUpdate(
-                { _id: context.user._id },
-                { $addToSet: { savedBooks: book } }
+            };
+            console.log(book);
+            const user = await User.findOneAndUpdate(
+                { _id: context._id },
+                { $addToSet: { savedBooks: book } },
+                { new: true }
             );
-            return user;
+            console.log({ user });
+
+            return book;
         },
 
         deleteBook: async (parent, { bookId, username }, context) => {
-            const user = User.findOneANdUpdate(
-                { $or: [{ _id: context.user._id }, { username: username }] },
+            const user = User.findOneAndUpdate(
+                { $or: [{ _id: context._id }, { username: username }] },
                 {
-                    $pull: { savedBooks: { $in: [bookId] } },
-                }
+                    $pull: { savedBooks: { bookId: bookId } },
+                },
+                { new: true }
             );
+            return user;
         },
     },
 };

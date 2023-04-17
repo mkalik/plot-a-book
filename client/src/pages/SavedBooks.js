@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Button, Row, Col } from 'react-bootstrap';
-
+import { useQuery, useMutation } from '@apollo/client';
 import { getMe, deleteBook } from '../utils/API';
+import { GET_ME } from '../utils/queries';
+import { DEL_BOOK } from '../utils/mutations';
 import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
 
@@ -10,6 +12,8 @@ const SavedBooks = () => {
 
     // use this to determine if `useEffect()` hook needs to run again
     const userDataLength = Object.keys(userData).length;
+    const { data, loading, error, refetch } = useQuery(GET_ME);
+    const [deleteBook] = useMutation(DEL_BOOK);
 
     useEffect(() => {
         const getUserData = async () => {
@@ -20,13 +24,16 @@ const SavedBooks = () => {
                     return false;
                 }
 
-                const response = await getMe(token);
-
-                if (!response.ok) {
+                if (error) {
                     throw new Error('something went wrong!');
                 }
+                if (loading) {
+                    return '...loading';
+                }
 
-                const user = await response.json();
+                const { getUser: user } = await data;
+                console.log(user);
+
                 setUserData(user);
             } catch (err) {
                 console.error(err);
@@ -34,7 +41,8 @@ const SavedBooks = () => {
         };
 
         getUserData();
-    }, [userDataLength]);
+    }, [userDataLength, loading]);
+    console.log(userDataLength);
 
     // create function that accepts the book's mongo_id value as param and deletes the book from the database
     const handleDeleteBook = async (bookId) => {
@@ -45,13 +53,19 @@ const SavedBooks = () => {
         }
 
         try {
-            const response = await deleteBook(bookId, token);
+            const {
+                data: {
+                    deleteBook: { savedBooks: response },
+                },
+                loading: wait,
+                error: err,
+            } = await deleteBook({ variables: { bookId } });
 
-            if (!response.ok) {
+            if (!response) {
                 throw new Error('something went wrong!');
             }
 
-            const updatedUser = await response.json();
+            const updatedUser = await response;
             setUserData(updatedUser);
             // upon success, remove book's id from localStorage
             removeBookId(bookId);
@@ -62,6 +76,7 @@ const SavedBooks = () => {
 
     // if data isn't here yet, say so
     if (!userDataLength) {
+        // refetch();
         return <h2>LOADING...</h2>;
     }
 
