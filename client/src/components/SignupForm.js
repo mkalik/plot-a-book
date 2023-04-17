@@ -35,14 +35,18 @@ const SignupForm = () => {
         }
 
         try {
-            await createUser({ variables: userFormData });
+            const { data } = await createUser({
+                variables: userFormData,
+            });
 
             if (error) {
                 throw new Error('something went wrong!');
             }
+            console.log(loading);
+            console.log('data', data);
+            const token = data.createUser.token;
 
-            const { token, user } = await data;
-            console.log(user);
+            console.log(token);
             Auth.login(token);
         } catch (err) {
             console.error(err);
@@ -55,6 +59,7 @@ const SignupForm = () => {
             password: '',
         });
     };
+    if (loading) return 'loading';
 
     return (
         <>
